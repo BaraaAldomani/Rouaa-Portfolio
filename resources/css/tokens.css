@@ -1,0 +1,101 @@
+/**
+ * ════════════════════════════════════════════════════════════════
+ *  DESIGN TOKENS — "Sky & Glass" — the single source of truth for
+ *  EVERY color on the site.
+ *
+ *  ➜ To rebrand, edit ONLY the three values in the BRAND block below
+ *    (also editable live from the dashboard → Theme settings). All
+ *    shades, surfaces, text, borders, glass tints and orb washes
+ *    derive from them automatically via CSS color-mix() — no other
+ *    file contains a color.
+ *
+ *  Consumed by Tailwind v4 in resources/css/app.css (@theme inline),
+ *  so Blade only ever uses utilities like bg-primary-600, text-muted,
+ *  border-line — never raw hex.
+ * ════════════════════════════════════════════════════════════════
+ */
+
+:root {
+    /* ┌──────────────── BRAND — EDIT THESE THREE ────────────────┐ */
+    --brand-primary:   #1B9BD2;  /* sky blue — brand mark, links, CTAs   */
+    --brand-secondary: #16384C;  /* deep blue-slate — ink & dark sections */
+    --brand-accent:    #35C3EE;  /* bright sky — highlights, glow         */
+    /* └───────────────────────────────────────────────────────────┘ */
+
+    /* Absolutes (kept here so no other file defines a color) */
+    --brand-white: #ffffff;
+    --brand-black: #000000;
+
+    /* ── Primary scale (base ≙ 600) — derived, do not edit ── */
+    --brand-primary-50:  color-mix(in oklab, var(--brand-primary) 6%,  var(--brand-white));
+    --brand-primary-100: color-mix(in oklab, var(--brand-primary) 12%, var(--brand-white));
+    --brand-primary-200: color-mix(in oklab, var(--brand-primary) 24%, var(--brand-white));
+    --brand-primary-300: color-mix(in oklab, var(--brand-primary) 40%, var(--brand-white));
+    --brand-primary-400: color-mix(in oklab, var(--brand-primary) 65%, var(--brand-white));
+    --brand-primary-500: color-mix(in oklab, var(--brand-primary) 85%, var(--brand-white));
+    --brand-primary-600: var(--brand-primary);
+    --brand-primary-700: color-mix(in oklab, var(--brand-primary) 82%, var(--brand-black));
+    --brand-primary-800: color-mix(in oklab, var(--brand-primary) 65%, var(--brand-black));
+    --brand-primary-900: color-mix(in oklab, var(--brand-primary) 50%, var(--brand-black));
+    --brand-primary-950: color-mix(in oklab, var(--brand-primary) 34%, var(--brand-black));
+
+    /* ── Accent scale (base ≙ 500) — derived, do not edit ── */
+    --brand-accent-50:  color-mix(in oklab, var(--brand-accent) 7%,  var(--brand-white));
+    --brand-accent-100: color-mix(in oklab, var(--brand-accent) 14%, var(--brand-white));
+    --brand-accent-200: color-mix(in oklab, var(--brand-accent) 28%, var(--brand-white));
+    --brand-accent-300: color-mix(in oklab, var(--brand-accent) 48%, var(--brand-white));
+    --brand-accent-400: color-mix(in oklab, var(--brand-accent) 72%, var(--brand-white));
+    --brand-accent-500: var(--brand-accent);
+    --brand-accent-600: color-mix(in oklab, var(--brand-accent) 84%, var(--brand-black));
+    --brand-accent-700: color-mix(in oklab, var(--brand-accent) 68%, var(--brand-black));
+    --brand-accent-800: color-mix(in oklab, var(--brand-accent) 54%, var(--brand-black));
+    --brand-accent-900: color-mix(in oklab, var(--brand-accent) 42%, var(--brand-black));
+    --brand-accent-950: color-mix(in oklab, var(--brand-accent) 28%, var(--brand-black));
+
+    /* ── Neutral scale — tinted by secondary so grays match the brand ── */
+    --brand-neutral-50:  color-mix(in oklab, var(--brand-secondary) 3%,  var(--brand-white));
+    --brand-neutral-100: color-mix(in oklab, var(--brand-secondary) 6%,  var(--brand-white));
+    --brand-neutral-200: color-mix(in oklab, var(--brand-secondary) 12%, var(--brand-white));
+    --brand-neutral-300: color-mix(in oklab, var(--brand-secondary) 22%, var(--brand-white));
+    --brand-neutral-400: color-mix(in oklab, var(--brand-secondary) 38%, var(--brand-white));
+    --brand-neutral-500: color-mix(in oklab, var(--brand-secondary) 52%, var(--brand-white));
+    --brand-neutral-600: color-mix(in oklab, var(--brand-secondary) 66%, var(--brand-white));
+    --brand-neutral-700: color-mix(in oklab, var(--brand-secondary) 78%, var(--brand-white));
+    --brand-neutral-800: color-mix(in oklab, var(--brand-secondary) 90%, var(--brand-white));
+    --brand-neutral-900: var(--brand-secondary);
+    --brand-neutral-950: color-mix(in oklab, var(--brand-secondary) 80%, var(--brand-black));
+
+    /* ── Semantic aliases — what Blade utilities actually mean (LIGHT-first) ── */
+    --brand-surface:            var(--brand-white);            /* page background        */
+    --brand-surface-muted:      var(--brand-neutral-50);       /* alternating sections   */
+    --brand-surface-sky:        var(--brand-primary-50);       /* soft sky-tinted band   */
+    --brand-surface-dark:       var(--brand-secondary);        /* footer / dark sections */
+    --brand-surface-dark-soft:  color-mix(in oklab, var(--brand-secondary) 90%, var(--brand-white));
+    --brand-text:               var(--brand-neutral-900);
+    --brand-text-muted:         var(--brand-neutral-600);
+    --brand-text-on-dark:       var(--brand-neutral-50);
+    --brand-text-muted-on-dark: color-mix(in oklab, var(--brand-white) 72%, var(--brand-secondary));
+    --brand-line:               var(--brand-neutral-200);      /* borders / dividers     */
+    --brand-line-on-dark:       color-mix(in oklab, var(--brand-white) 14%, transparent);
+
+    /* ── Glass — frosted translucent cards & hairline borders ── */
+    --brand-glass:        color-mix(in oklab, var(--brand-white) 72%, transparent);
+    --brand-glass-strong: color-mix(in oklab, var(--brand-white) 86%, transparent);
+    --brand-glass-border: color-mix(in oklab, var(--brand-white) 60%, transparent);
+    --brand-glass-hair:   color-mix(in oklab, var(--brand-primary) 14%, transparent);
+
+    /* ── Soft shadow color, in the primary hue (calm, elevated) ── */
+    --brand-shadow: color-mix(in oklab, var(--brand-secondary) 22%, transparent);
+    --brand-shadow-primary: color-mix(in oklab, var(--brand-primary) 28%, transparent);
+
+    /* ── Orbs — large blurred pastel washes for parallax backgrounds ── */
+    --brand-orb-1: color-mix(in oklab, var(--brand-primary) 40%, transparent);
+    --brand-orb-2: color-mix(in oklab, var(--brand-accent) 34%, transparent);
+    --brand-orb-3: color-mix(in oklab, var(--brand-primary-300) 46%, transparent);
+
+    /* ── Status (forms, alerts) ── */
+    --brand-danger:       #dc2626;
+    --brand-danger-soft:  color-mix(in oklab, var(--brand-danger) 10%, var(--brand-white));
+    --brand-success:      #16a34a;
+    --brand-success-soft: color-mix(in oklab, var(--brand-success) 10%, var(--brand-white));
+}

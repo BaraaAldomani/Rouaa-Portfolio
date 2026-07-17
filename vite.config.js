@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
-import { bunny } from 'laravel-vite-plugin/fonts';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
@@ -11,14 +10,6 @@ export default defineConfig({
                 'resources/js/sky.js',
             ],
             refresh: true,
-            fonts: [
-                bunny('Cairo', {
-                    weights: [300, 400, 500, 600, 700, 800, 900],
-                }),
-                bunny('Inter', {
-                    weights: [400, 500, 600, 700, 800],
-                }),
-            ],
         }),
         tailwindcss(),
     ],

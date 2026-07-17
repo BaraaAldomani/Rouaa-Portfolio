@@ -17,4 +17,7 @@ return [
     'read_more' => 'اقرأ المزيد',
     'explore_services' => 'استكشف الخدمات',
     'explore_training' => 'استكشف الدورات',
+    'level_beginner' => 'مبتدئ',
+    'level_intermediate' => 'متوسط',
+    'level_advanced' => 'متقدم',
 ];

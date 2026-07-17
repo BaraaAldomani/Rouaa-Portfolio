@@ -1,0 +1,448 @@
+/**
+ * ════════════════════════════════════════════════════════════════
+ *  "Sky & Glass" component layer.
+ *  Frosted glass, soft sky washes, floating logo rings, pill controls
+ *  — all colored strictly through the tokens in tokens.css.
+ * ════════════════════════════════════════════════════════════════
+ */
+
+/* ───────────────────────── Layout helpers ───────────────────────── */
+.container-x {
+    width: 100%;
+    max-width: 1180px;
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+}
+
+.section-y {
+    padding-block: clamp(3.5rem, 8vw, 6.5rem);
+}
+
+/* ───────────────────────── Frosted glass ───────────────────────── */
+.glass {
+    background: var(--brand-glass-strong);
+    backdrop-filter: blur(16px) saturate(1.2);
+    -webkit-backdrop-filter: blur(16px) saturate(1.2);
+    border: 1px solid var(--brand-glass-border);
+    border-radius: 1.5rem;
+    box-shadow:
+        0 1px 0 0 color-mix(in oklab, var(--brand-white) 60%, transparent) inset,
+        0 18px 40px -24px var(--brand-shadow);
+}
+
+.glass-soft {
+    background: var(--brand-glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--brand-glass-border);
+    border-radius: 1.25rem;
+}
+
+/* Lift + shadow bloom on hover (calm, spring-eased). */
+.card-lift {
+    transition:
+        transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+        box-shadow 0.4s ease,
+        border-color 0.4s ease;
+    will-change: transform;
+}
+
+.card-lift:hover {
+    transform: translateY(-6px);
+    border-color: var(--brand-glass-hair);
+    box-shadow:
+        0 1px 0 0 color-mix(in oklab, var(--brand-white) 70%, transparent) inset,
+        0 28px 55px -26px var(--brand-shadow-primary);
+}
+
+/* ───────────────────── Background orbs (parallax) ───────────────────── */
+.orbs {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(70px);
+    opacity: 0.75;
+    will-change: transform;
+}
+
+.orb-1 {
+    width: 34rem;
+    height: 34rem;
+    background: radial-gradient(circle, var(--brand-orb-1), transparent 68%);
+    top: -10rem;
+    inset-inline-start: -8rem;
+    animation: orb-float-1 24s ease-in-out infinite alternate;
+}
+
+.orb-2 {
+    width: 30rem;
+    height: 30rem;
+    background: radial-gradient(circle, var(--brand-orb-2), transparent 68%);
+    bottom: -12rem;
+    inset-inline-end: -9rem;
+    animation: orb-float-2 30s ease-in-out infinite alternate;
+}
+
+.orb-3 {
+    width: 26rem;
+    height: 26rem;
+    background: radial-gradient(circle, var(--brand-orb-3), transparent 70%);
+    top: 32%;
+    inset-inline-start: 42%;
+    animation: orb-float-3 36s ease-in-out infinite alternate;
+}
+
+@keyframes orb-float-1 {
+    to { transform: translate3d(6rem, 4rem, 0) scale(1.12); }
+}
+@keyframes orb-float-2 {
+    to { transform: translate3d(-5rem, -4rem, 0) scale(1.08); }
+}
+@keyframes orb-float-3 {
+    to { transform: translate3d(-4rem, 3rem, 0) scale(0.92); }
+}
+
+/* ─────────────── Floating logo with rotating dashed rings ─────────────── */
+.logo-orb {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: clamp(15rem, 34vw, 22rem);
+    aspect-ratio: 1;
+    margin-inline: auto;
+}
+
+.logo-circle {
+    position: relative;
+    z-index: 2;
+    width: 62%;
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--brand-glass-strong);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--brand-glass-border);
+    box-shadow: 0 24px 60px -28px var(--brand-shadow-primary);
+    animation: logo-float 6s ease-in-out infinite;
+}
+
+.logo-circle img {
+    width: 74%;
+    height: auto;
+}
+
+.logo-ring,
+.logo-ring-2 {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px dashed color-mix(in oklab, var(--brand-primary) 45%, transparent);
+    inset: 0;
+}
+
+.logo-ring {
+    inset: 8%;
+    animation: spin 26s linear infinite;
+}
+
+.logo-ring-2 {
+    inset: -2%;
+    border-color: color-mix(in oklab, var(--brand-accent) 50%, transparent);
+    border-style: dashed;
+    animation: spin-reverse 38s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+@keyframes spin-reverse {
+    to { transform: rotate(-360deg); }
+}
+@keyframes logo-float {
+    50% { transform: translateY(-10px); }
+}
+
+/* ───────────────────────── Pill controls ───────────────────────── */
+.btn-sky,
+.btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 999px;
+    padding: 0.85rem 1.6rem;
+    font-weight: 700;
+    font-size: 0.95rem;
+    line-height: 1;
+    text-align: center;
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.3s ease,
+        background 0.3s ease,
+        color 0.3s ease;
+    will-change: transform;
+}
+
+.btn-sky {
+    color: var(--brand-white);
+    background: linear-gradient(135deg, var(--brand-primary-500), var(--brand-primary-700));
+    box-shadow: 0 14px 30px -14px var(--brand-shadow-primary);
+}
+
+.btn-sky:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 38px -14px var(--brand-shadow-primary);
+}
+
+.btn-ghost {
+    color: var(--brand-primary-700);
+    background: var(--brand-glass-strong);
+    border: 1px solid color-mix(in oklab, var(--brand-primary) 30%, transparent);
+}
+
+.btn-ghost:hover {
+    transform: translateY(-2px);
+    background: var(--brand-primary-50);
+}
+
+.btn-sky:active,
+.btn-ghost:active {
+    transform: scale(0.98);
+}
+
+/* Pills / badges */
+.pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: 999px;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: var(--brand-primary-50);
+    color: var(--brand-primary-700);
+    border: 1px solid color-mix(in oklab, var(--brand-primary) 18%, transparent);
+}
+
+.eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--brand-primary-700);
+}
+
+.eyebrow::before {
+    content: '';
+    width: 1.6rem;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--brand-primary), var(--brand-accent));
+}
+
+/* Level badges (course cards) */
+.badge-level {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.25rem 0.7rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+.badge-beginner {
+    color: var(--brand-success);
+    background: var(--brand-success-soft);
+}
+.badge-intermediate {
+    color: var(--brand-primary-700);
+    background: var(--brand-primary-50);
+}
+.badge-advanced {
+    color: color-mix(in oklab, var(--brand-secondary) 78%, var(--brand-white));
+    background: color-mix(in oklab, var(--brand-secondary) 10%, var(--brand-white));
+}
+
+/* ───────────────────────── Nav underline ───────────────────────── */
+.nav-link {
+    position: relative;
+    font-weight: 600;
+    color: var(--brand-neutral-700);
+    transition: color 0.25s ease;
+}
+
+.nav-link:hover,
+.nav-link[aria-current='page'] {
+    color: var(--brand-primary-700);
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    bottom: -0.4rem;
+    height: 2px;
+    border-radius: 1px;
+    background: linear-gradient(90deg, var(--brand-primary), var(--brand-accent));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[dir='rtl'] .nav-link::after {
+    transform-origin: right;
+}
+
+.nav-link:hover::after,
+.nav-link[aria-current='page']::after {
+    transform: scaleX(1);
+}
+
+/* ───────────────────────── Gradient text ───────────────────────── */
+.gradient-text {
+    background-image: linear-gradient(
+        100deg,
+        var(--brand-primary-600),
+        var(--brand-accent-500),
+        var(--brand-primary-600)
+    );
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: gradient-pan 8s linear infinite;
+}
+
+@keyframes gradient-pan {
+    to { background-position: 200% 0; }
+}
+
+/* ───────────────────────── Inner-page hero ───────────────────────── */
+.page-hero {
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(120% 100% at 50% -20%, var(--brand-primary-100), transparent 60%),
+        linear-gradient(160deg, var(--brand-primary-50), var(--brand-surface));
+    border-bottom: 1px solid var(--brand-line);
+}
+
+/* Dark band (footer / CTA) helper */
+.on-dark {
+    color: var(--brand-text-on-dark);
+}
+.on-dark .text-muted-on-dark {
+    color: var(--brand-text-muted-on-dark);
+}
+
+/* Animated count-up number */
+.stat-num {
+    font-family: var(--font-display);
+    font-weight: 800;
+    line-height: 1;
+    background-image: linear-gradient(135deg, var(--brand-primary-600), var(--brand-accent-500));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+/* ───────────────────────── Site navigation ───────────────────────── */
+.site-nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    transition:
+        background 0.3s ease,
+        box-shadow 0.3s ease,
+        border-color 0.3s ease;
+    background: color-mix(in oklab, var(--brand-white) 40%, transparent);
+    border-bottom: 1px solid transparent;
+}
+
+.site-nav.is-scrolled {
+    background: color-mix(in oklab, var(--brand-white) 82%, transparent);
+    backdrop-filter: blur(14px) saturate(1.3);
+    -webkit-backdrop-filter: blur(14px) saturate(1.3);
+    border-bottom-color: var(--brand-line);
+    box-shadow: 0 10px 30px -24px var(--brand-shadow);
+}
+
+.nav-toggle {
+    display: none;
+}
+
+.body-nav-menu {
+    display: flex;
+    align-items: center;
+    gap: 1.75rem;
+}
+
+@media (max-width: 860px) {
+    .nav-toggle {
+        display: inline-flex;
+    }
+
+    .body-nav-menu {
+        position: fixed;
+        inset: 0 0 0 auto;
+        width: min(80vw, 20rem);
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 1.5rem;
+        padding: 2rem 2.25rem;
+        background: var(--brand-glass-strong);
+        backdrop-filter: blur(18px) saturate(1.3);
+        -webkit-backdrop-filter: blur(18px) saturate(1.3);
+        border-inline-start: 1px solid var(--brand-glass-border);
+        box-shadow: -20px 0 60px -30px var(--brand-shadow);
+        transform: translateX(100%);
+        transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    [dir='rtl'] .body-nav-menu {
+        inset: 0 auto 0 0;
+        border-inline-start: none;
+        border-inline-end: 1px solid var(--brand-glass-border);
+        transform: translateX(-100%);
+    }
+
+    .body-nav-menu.is-open {
+        transform: translateX(0);
+    }
+
+    .body-nav-menu .nav-link {
+        font-size: 1.15rem;
+    }
+}
+
+body.nav-open {
+    overflow: hidden;
+}
+
+.hamburger {
+    position: relative;
+    width: 1.5rem;
+    height: 1.1rem;
+}
+.hamburger span {
+    position: absolute;
+    inset-inline: 0;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--brand-primary-700);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+.hamburger span:nth-child(1) { top: 0; }
+.hamburger span:nth-child(2) { top: 50%; transform: translateY(-50%); }
+.hamburger span:nth-child(3) { bottom: 0; }

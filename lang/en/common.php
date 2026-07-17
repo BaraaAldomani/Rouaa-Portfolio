@@ -17,4 +17,7 @@ return [
     'read_more' => 'Read more',
     'explore_services' => 'Explore services',
     'explore_training' => 'Explore training',
+    'level_beginner' => 'Beginner',
+    'level_intermediate' => 'Intermediate',
+    'level_advanced' => 'Advanced',
 ];
