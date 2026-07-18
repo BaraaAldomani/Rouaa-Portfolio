@@ -36,17 +36,22 @@ Changing the document root is still preferable when possible.
 
 > Verify either way: `https://rouaa.rakeez-llc.com/.env` must return 403/404.
 
-### c. Create `.env` on the server
-Copy `.env.example` to `.env` and fill in production values:
+### c. Build the encrypted production env (done **locally**, shipped by git)
+
+Production config is **not** hand-edited on the server. You keep a plaintext
+`.env.production` on your machine (git-ignored), commit only its AES-256
+encrypted form, and the pipeline decrypts it into `.env` on every deploy.
+
+**1. Create `.env.production` locally** (never committed):
 
 ```dotenv
 APP_NAME="Rouaa Mahmoud"
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://your-domain.com
-APP_KEY=            # generate: php artisan key:generate
+APP_URL=https://rouaa.rakeez-llc.com
+APP_KEY=                # generate once (see step 2) and then NEVER change it
 
-APP_LOCALE=en          # public site is Arabic-first via routing (/ → /ar)
+APP_LOCALE=en           # public site is Arabic-first via routing (/ → /ar)
 APP_FALLBACK_LOCALE=en
 
 DB_CONNECTION=mysql
@@ -56,7 +61,7 @@ DB_DATABASE=your_db
 DB_USERNAME=your_db_user
 DB_PASSWORD=your_db_password
 
-# Used once by app:create-admin below.
+# Used once by app:create-admin.
 ADMIN_EMAIL=rouaa@example.com
 ADMIN_PASSWORD=a-strong-password
 ADMIN_NAME="Rouaa Mahmoud"
@@ -67,6 +72,34 @@ QUEUE_CONNECTION=database
 MAIL_MAILER=log
 ```
 
+**2. Generate a stable `APP_KEY`** and paste it into `.env.production`:
+
+```bash
+docker compose exec app php artisan key:generate --show
+```
+
+> ⚠️ `APP_KEY` encrypts sessions and any encrypted DB values. Set it once and
+> keep it forever — changing it later logs everyone out and breaks encrypted data.
+
+**3. Generate an env-encryption key and encrypt:**
+
+```bash
+# One time: create the key and KEEP IT (password manager + GitHub secret).
+docker compose exec app php -r "echo 'base64:'.base64_encode(random_bytes(32)),PHP_EOL;"
+
+# Encrypt (note: env:encrypt only accepts --key; it ignores the env var).
+docker compose exec app php artisan env:encrypt --env=production --key="base64:PASTE_KEY" --force
+```
+
+This writes **`.env.production.encrypted`** — commit that file. The plaintext
+`.env.production` is blocked by `.gitignore`.
+
+**4. Add the key as a GitHub secret** named `LARAVEL_ENV_ENCRYPTION_KEY`.
+
+On every deploy the pipeline runs `env:decrypt` on the server and moves the
+result to `.env` (mode 600), backing up the previous one to `.env.backup`.
+If the secret is absent, the pipeline leaves the server's `.env` untouched.
+
 > `PHP_BIN` below is the path to **PHP 8.3** CLI. On Hostinger/CloudLinux this
 > is usually `/opt/alt/php83/usr/bin/php` (the default `php` may be 8.2). Use
 > the same binary you set in the `PHP_BIN` GitHub secret.
@@ -74,10 +107,10 @@ MAIL_MAILER=log
 ### d. First-time bootstrap (run once, after the first deploy has rsynced files)
 
 ```bash
-cd ~/public_html            # your DEPLOY_PATH
+cd /home/u744145577/domains/rouaa.rakeez-llc.com/public_html
 PHP_BIN=/opt/alt/php83/usr/bin/php
 
-$PHP_BIN artisan key:generate           # only if APP_KEY is empty
+# .env already exists — the pipeline decrypted it. No key:generate needed.
 $PHP_BIN artisan migrate --force
 $PHP_BIN artisan db:seed --force        # initial bilingual content + settings
 $PHP_BIN artisan app:create-admin       # reads ADMIN_EMAIL / ADMIN_PASSWORD
@@ -106,6 +139,49 @@ Just push to `main`. The pipeline (see the workflow file) will:
 
 `db:seed` and `app:create-admin` are **not** re-run by the pipeline — content
 lives in the database and is managed from `/admin`.
+
+---
+
+## 2b. Changing an environment value (no SSH needed)
+
+This is the whole point of the encrypted env: you never open the server to
+edit config. Full loop, all local:
+
+```bash
+# 1. Decrypt to plaintext (only if you don't still have .env.production locally)
+docker compose exec app php artisan env:decrypt --env=production \
+  --key="base64:YOUR_KEY" --force
+
+# 2. Edit .env.production in your editor (it is git-ignored)
+
+# 3. Re-encrypt
+docker compose exec app php artisan env:encrypt --env=production \
+  --key="base64:YOUR_KEY" --force
+
+# 4. Ship it
+git add .env.production.encrypted
+git commit -m "env: update production config"
+git push
+```
+
+The push triggers a deploy, which decrypts the new bundle into `.env`,
+clears the caches and re-caches config — so the change is live automatically.
+
+**Notes**
+
+- `.env.production.encrypted` is the single source of truth. Any manual edit
+  made directly on the server is overwritten on the next deploy (by design).
+- The previous `.env` is kept at `.env.backup` on the server for one deploy.
+- **Rotating the encryption key:** re-encrypt with a new key, update the
+  `LARAVEL_ENV_ENCRYPTION_KEY` secret, then push. Do both, or the deploy fails
+  to decrypt.
+- **Losing the key** is recoverable: rebuild `.env.production` by hand, encrypt
+  with a fresh key, update the secret, push.
+- ⚠️ **Keep this repository private.** The bundle is AES-256-CBC encrypted, so
+  it is safe at rest, but a public repo hands an attacker the ciphertext
+  permanently — if the key ever leaks, every secret in it is exposed. If the
+  repo is or becomes public, rotate `APP_KEY`, the DB password, and the admin
+  password immediately.
 
 ---
 

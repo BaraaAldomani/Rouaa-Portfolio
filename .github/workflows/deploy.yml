@@ -62,6 +62,11 @@ jobs:
           SSH_PORT: ${{ secrets.SSH_PORT }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
           PHP_BIN: ${{ secrets.PHP_BIN || 'php' }}
+          # Optional. When set, the server decrypts .env.production.encrypted
+          # into .env on every deploy, so environment changes ship through git
+          # and nobody has to edit .env over SSH. When unset, the existing
+          # server-side .env is left completely untouched.
+          ENV_ENCRYPTION_KEY: ${{ secrets.LARAVEL_ENV_ENCRYPTION_KEY }}
         run: |
           mkdir -p ~/.ssh && chmod 700 ~/.ssh
           # Strip any Windows CR characters that can mangle a pasted key.
@@ -97,12 +102,28 @@ jobs:
           # Deleting the cached files with rm involves no PHP boot, so it always
           # works; everything after boots against fresh, correct config.
           #
+          # The env step below rebuilds .env from the encrypted bundle committed
+          # in the repo, so production config is edited locally and shipped by
+          # git — never hand-edited over SSH. It runs before optimize:clear and
+          # migrate so both see the fresh values. Skipped entirely when
+          # LARAVEL_ENV_ENCRYPTION_KEY is not set.
+          #
           # First deploy only (run once by hand over SSH, NOT in this pipeline, so
           # later deploys never overwrite content you edit in the dashboard):
           #   $PHP_BIN artisan db:seed --force        # initial content + settings
           #   $PHP_BIN artisan app:create-admin       # uses ADMIN_EMAIL / ADMIN_PASSWORD from .env
           ssh -p "$SSH_PORT" -i ~/.ssh/deploy_key "$SSH_USER@$SSH_HOST" "set -e; cd '$DEPLOY_PATH'; \
             rm -f bootstrap/cache/config.php bootstrap/cache/routes-v7.php bootstrap/cache/events.php; \
+            [ -f .env ] || cp .env.example .env; \
+            if [ -n '$ENV_ENCRYPTION_KEY' ]; then \
+              cp .env .env.backup 2>/dev/null || true; \
+              LARAVEL_ENV_ENCRYPTION_KEY='$ENV_ENCRYPTION_KEY' $PHP_BIN artisan env:decrypt --env=production --force; \
+              mv -f .env.production .env; \
+              chmod 600 .env; \
+              echo 'env: rebuilt .env from .env.production.encrypted'; \
+            else \
+              echo 'env: LARAVEL_ENV_ENCRYPTION_KEY unset - leaving server .env untouched'; \
+            fi; \
             $PHP_BIN artisan optimize:clear; \
             $PHP_BIN artisan migrate --force; \
             $PHP_BIN artisan filament:assets; \
