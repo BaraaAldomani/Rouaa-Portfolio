@@ -23,7 +23,7 @@ RUN apk add --no-cache \
         freetype-dev \
         libzip-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
-    && docker-php-ext-install -j"$(nproc)" pdo_pgsql intl opcache gd zip \
+    && docker-php-ext-install -j"$(nproc)" pdo_pgsql pdo_mysql intl opcache gd zip \
     && apk del .build-deps
 
 # Full ICU locale data (Alpine ships English-only by default; the site is Arabic-first).

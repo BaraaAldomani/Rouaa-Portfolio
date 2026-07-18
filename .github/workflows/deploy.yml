@@ -1,0 +1,112 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# CI/CD: build the Laravel app on GitHub's runners, then deploy to Hostinger
+# (shared hosting) over SSH with rsync. Runs on every push to main/master.
+#
+# Required repo secrets (Settings → Secrets and variables → Actions → New secret).
+# See deploy/CICD.md:
+#   SSH_PRIVATE_KEY  the full private key (-----BEGIN ... END-----)
+#   SSH_HOST         e.g. 123.45.67.89  or your server hostname
+#   SSH_USER         e.g. u744145577
+#   SSH_PORT         Hostinger shared hosting is usually 65002 (not 22)
+#   DEPLOY_PATH      e.g. /home/u744145577/public_html
+#   PHP_BIN          server CLI php must be 8.3. On CloudLinux set to the full
+#                    path /opt/alt/php83/usr/bin/php. Defaults to "php".
+# ─────────────────────────────────────────────────────────────────────────────
+name: Deploy to Hostinger
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch: {}   # lets you trigger a deploy manually from the Actions tab
+
+# Cancel an in-progress deploy if you push again before it finishes.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 1) PHP + Composer dependencies → vendor/
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: intl, gd, zip, pdo, pdo_mysql, bcmath, mbstring
+
+      - name: Install Composer dependencies
+        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-progress
+
+      # 2) Front-end assets → public/build/
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Build assets
+        run: |
+          npm ci
+          npm run build
+
+      # 3) Ship to Hostinger, then run remote artisan commands
+      - name: Deploy over SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          PHP_BIN: ${{ secrets.PHP_BIN || 'php' }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          # Strip any Windows CR characters that can mangle a pasted key.
+          printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "$SSH_PORT" "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+          # Quick auth probe so the log shows a clear reason if the key is rejected.
+          ssh -p "$SSH_PORT" -i ~/.ssh/deploy_key -o BatchMode=yes \
+            -o StrictHostKeyChecking=accept-new \
+            "$SSH_USER@$SSH_HOST" 'echo SSH_OK; whoami; pwd'
+
+          # Sync the app. No --delete: server-side .env and uploaded images are safe.
+          rsync -az --no-perms --no-owner --no-group \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='node_modules/' \
+            --exclude='deploy/' \
+            --exclude='tests/' \
+            --exclude='.env' \
+            --exclude='storage/logs/*' \
+            --exclude='storage/framework/cache/data/*' \
+            --exclude='storage/framework/sessions/*' \
+            --exclude='storage/framework/views/*' \
+            -e "ssh -p $SSH_PORT -i ~/.ssh/deploy_key" \
+            ./ "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/"
+
+          # Rebuild on the server. The stale-cache purge MUST be plain `rm`, not
+          # an artisan command: every artisan command boots the full framework
+          # first, and a cached config.php left by a previous deploy (rsync has
+          # no --delete and the runner never generates one) makes package
+          # providers boot against outdated config and crash before the command
+          # runs (symptom: CannotRegisterIconSet "heroicons set has no prefix").
+          # Deleting the cached files with rm involves no PHP boot, so it always
+          # works; everything after boots against fresh, correct config.
+          #
+          # First deploy only (run once by hand over SSH, NOT in this pipeline, so
+          # later deploys never overwrite content you edit in the dashboard):
+          #   $PHP_BIN artisan db:seed --force        # initial content + settings
+          #   $PHP_BIN artisan app:create-admin       # uses ADMIN_EMAIL / ADMIN_PASSWORD from .env
+          ssh -p "$SSH_PORT" -i ~/.ssh/deploy_key "$SSH_USER@$SSH_HOST" "set -e; cd '$DEPLOY_PATH'; \
+            rm -f bootstrap/cache/config.php bootstrap/cache/routes-v7.php bootstrap/cache/events.php; \
+            $PHP_BIN artisan optimize:clear; \
+            $PHP_BIN artisan migrate --force; \
+            $PHP_BIN artisan filament:assets; \
+            $PHP_BIN artisan storage:link || true; \
+            $PHP_BIN artisan config:cache; \
+            $PHP_BIN artisan route:cache; \
+            $PHP_BIN artisan view:cache"

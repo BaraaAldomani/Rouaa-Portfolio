@@ -1,0 +1,14 @@
+# Optional: only needed if you CANNOT set the domain's document root to the
+# app's public/ folder. Place this file as `.htaccess` in the app root (the
+# folder that contains `public/`, `app/`, `artisan`, …). It rewrites all
+# requests into public/ so Laravel serves correctly from a subfolder root.
+#
+# Preferred instead: point the domain document root straight at `…/public`.
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Send everything into the public/ directory.
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
