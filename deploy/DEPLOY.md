@@ -18,9 +18,23 @@ pipeline so later deploys never overwrite content edited in the dashboard.
 Note the DB name, user, and password.
 
 ### b. Point the document root at `public/`
-On Hostinger, set the domain's document root to `…/public_html/public`, or
-move the app so `public/` is the web root. (`public/.htaccess` ships with
-Laravel; a root `.htaccess` redirect example is in `deploy/root.htaccess`.)
+
+The app deploys to this account's per-domain folder:
+
+```
+DEPLOY_PATH=/home/u744145577/domains/rouaa.rakeez-llc.com/public_html
+```
+
+**Preferred:** hPanel → **Domains → rouaa.rakeez-llc.com → Document Root** → set
+it to `public_html/public`. This keeps `.env`, `vendor/` and `storage/` outside
+the web root and is the most secure option.
+
+**If the plan won't let you change it:** copy `deploy/root.htaccess` to
+`public_html/.htaccess`. It forwards every request into `public/` and
+explicitly denies `.env`, `storage/`, `vendor/` and other app internals.
+Changing the document root is still preferable when possible.
+
+> Verify either way: `https://rouaa.rakeez-llc.com/.env` must return 403/404.
 
 ### c. Create `.env` on the server
 Copy `.env.example` to `.env` and fill in production values:

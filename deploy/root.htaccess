@@ -1,14 +1,30 @@
-# Optional: only needed if you CANNOT set the domain's document root to the
-# app's public/ folder. Place this file as `.htaccess` in the app root (the
-# folder that contains `public/`, `app/`, `artisan`, …). It rewrites all
-# requests into public/ so Laravel serves correctly from a subfolder root.
+# Fallback for when the domain's document root CANNOT be pointed at the app's
+# public/ folder. Copy this to `public_html/.htaccess` (the folder containing
+# `artisan`, `app/`, `public/`, …).
 #
-# Preferred instead: point the domain document root straight at `…/public`.
+# Preferred instead: hPanel → Domains → <domain> → Document Root →
+# `public_html/public`. Then this file is unnecessary.
+#
+# Verify either way:  https://<domain>/.env  must return 403 or 404.
 
+# ── 1. Hard-deny sensitive files/paths, independent of mod_rewrite ──────────
+# (Belt-and-braces: if rewriting is ever disabled, these still apply.)
+<FilesMatch "^\.env(\..*)?$|^composer\.(json|lock)$|^package(-lock)?\.json$|^artisan$|^phpunit\.xml$|^docker-compose\.yaml$|^Dockerfile$">
+    Require all denied
+</FilesMatch>
+
+# Block dotfiles generally (.env, .git, .gitignore …), but keep .well-known
+# reachable so TLS/ACME challenges still work.
+RedirectMatch 404 ^/\.(?!well-known)
+
+# Block direct access to application directories.
+RedirectMatch 404 ^/(app|bootstrap|config|database|deploy|lang|resources|routes|storage|tests|vendor|node_modules)(/|$)
+
+# ── 2. Forward everything else into public/ ────────────────────────────────
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # Send everything into the public/ directory.
+    # Don't re-rewrite requests already inside public/.
     RewriteCond %{REQUEST_URI} !^/public/
     RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>

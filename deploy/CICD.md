@@ -4,14 +4,25 @@ Add these under **GitHub → Settings → Secrets and variables → Actions → 
 repository secret**. The deploy workflow (`.github/workflows/deploy.yml`) reads
 them to ship the build to Hostinger over SSH.
 
-| Secret | Example | Notes |
+This account (`u744145577`, host `lt-bnk-web430`) hosts several sites under
+`~/domains/`, so each site's app root is its own `public_html`:
+
+```
+/home/u744145577/domains/rouaa.rakeez-llc.com/public_html   ← this site
+/home/u744145577/domains/baraa.rakeez-llc.com/public_html   ← sibling site
+```
+
+| Secret | Value / example | Notes |
 |---|---|---|
 | `SSH_PRIVATE_KEY` | `-----BEGIN OPENSSH PRIVATE KEY----- …` | Full private key. Add the matching public key to the server's `~/.ssh/authorized_keys`. |
-| `SSH_HOST` | `123.45.67.89` | Server IP or hostname. |
+| `SSH_HOST` | your server IP / hostname | From hPanel → SSH access. |
 | `SSH_USER` | `u744145577` | Hostinger SSH user. |
 | `SSH_PORT` | `65002` | Hostinger shared hosting SSH port (not 22). |
-| `DEPLOY_PATH` | `/home/u744145577/public_html` | Where the app lives on the server. |
-| `PHP_BIN` | `/opt/alt/php83/usr/bin/php` | **PHP 8.3** CLI path. On CloudLinux the default `php` is often 8.2 — set the full 8.3 path. Defaults to `php` if unset. |
+| `DEPLOY_PATH` | `/home/u744145577/domains/rouaa.rakeez-llc.com/public_html` | The folder that will contain `artisan`. |
+| `PHP_BIN` | `/opt/alt/php83/usr/bin/php` | **PHP 8.3** CLI path. On CloudLinux the default `php` is often 8.2 — set the full 8.3 path. Defaults to `php` if unset. Verify with `<path> -v`. |
+
+> Do **not** upload anything to the domain folder itself (the level holding
+> `DO_NOT_UPLOAD_HERE`) — only `public_html` is served.
 
 ## Generating a deploy key
 
