@@ -19,9 +19,11 @@ class AdminUserSeeder extends Seeder
             return;
         }
 
-        $email = env('ADMIN_EMAIL', 'admin@rouaa.test');
-        $password = env('ADMIN_PASSWORD', 'password');
-        $name = env('ADMIN_NAME', 'Rouaa Mahmoud');
+        // `?:` (not the env default) so a set-but-empty ADMIN_EMAIL= in .env
+        // still falls back to the local default instead of an empty string.
+        $email = env('ADMIN_EMAIL') ?: 'admin@rouaa.test';
+        $password = env('ADMIN_PASSWORD') ?: 'password';
+        $name = env('ADMIN_NAME') ?: 'Rouaa Mahmoud';
 
         User::updateOrCreate(
             ['email' => $email],
