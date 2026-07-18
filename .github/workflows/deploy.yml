@@ -72,9 +72,22 @@ jobs:
           # Strip any Windows CR characters that can mangle a pasted key.
           printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
+
+          # Diagnostics. A fingerprint is public information (it is derived from
+          # the PUBLIC half), so this leaks nothing — but it makes a rejected key
+          # trivial to diagnose: compare it against the server's authorized_keys
+          #   ssh-keygen -lf ~/.ssh/authorized_keys
+          # If the fingerprint below is absent there, the wrong key is installed.
+          echo "::group::deploy key fingerprint"
+          ssh-keygen -lf ~/.ssh/deploy_key \
+            || echo "!! key is malformed - the SSH_PRIVATE_KEY secret is truncated or not a private key"
+          echo "::endgroup::"
+
           ssh-keyscan -p "$SSH_PORT" "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
-          # Quick auth probe so the log shows a clear reason if the key is rejected.
-          ssh -p "$SSH_PORT" -i ~/.ssh/deploy_key -o BatchMode=yes \
+
+          # Auth probe. -v so a rejection shows which key was offered and why.
+          ssh -v -p "$SSH_PORT" -i ~/.ssh/deploy_key -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
             -o StrictHostKeyChecking=accept-new \
             "$SSH_USER@$SSH_HOST" 'echo SSH_OK; whoami; pwd'
 
