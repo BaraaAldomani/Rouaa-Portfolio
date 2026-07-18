@@ -81,15 +81,32 @@ docker compose exec app php artisan key:generate --show
 > ⚠️ `APP_KEY` encrypts sessions and any encrypted DB values. Set it once and
 > keep it forever — changing it later logs everyone out and breaks encrypted data.
 
-**3. Generate an env-encryption key and encrypt:**
+**3. Encrypt it.** The first time, let Laravel mint the key — it prints it:
 
 ```bash
-# One time: create the key and KEEP IT (password manager + GitHub secret).
-docker compose exec app php -r "echo 'base64:'.base64_encode(random_bytes(32)),PHP_EOL;"
-
-# Encrypt (note: env:encrypt only accepts --key; it ignores the env var).
-docker compose exec app php artisan env:encrypt --env=production --key="base64:PASTE_KEY" --force
+docker compose exec app php artisan env:encrypt --env=production
 ```
+
+```
+Environment successfully encrypted.
+  Key ............................. base64:XkX9x…      ← SAVE THIS
+  Cipher .......................... AES-256-CBC
+  Encrypted file .................. .env.production.encrypted
+```
+
+Store that key in your password manager — it is the only thing that can
+decrypt the bundle. For every later re-encrypt, pass the **same** key so the
+GitHub secret stays valid:
+
+```bash
+docker compose exec app php artisan env:encrypt --env=production \
+  --key="base64:YOUR_KEY" --force
+```
+
+> ⚠️ `env:encrypt` only honours `--key`; it **ignores** `LARAVEL_ENV_ENCRYPTION_KEY`.
+> Omit `--key` on a re-encrypt and it silently mints a *new* random key, and the
+> next deploy fails with "The MAC is invalid." (`env:decrypt` does read the env
+> var — that is what the pipeline uses.)
 
 This writes **`.env.production.encrypted`** — commit that file. The plaintext
 `.env.production` is blocked by `.gitignore`.
