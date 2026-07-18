@@ -126,6 +126,17 @@ jobs:
           #   $PHP_BIN artisan db:seed --force        # initial content + settings
           #   $PHP_BIN artisan app:create-admin       # uses ADMIN_EMAIL / ADMIN_PASSWORD from .env
           ssh -p "$SSH_PORT" -i ~/.ssh/deploy_key "$SSH_USER@$SSH_HOST" "set -e; cd '$DEPLOY_PATH'; \
+            $PHP_BIN -v 2>/dev/null | head -1 | grep -qE 'PHP 8\.(3|4)\.' || { \
+              echo '=============================================================='; \
+              echo ' FATAL: PHP_BIN is not PHP 8.3+.'; \
+              echo \"   PHP_BIN currently = $PHP_BIN\"; \
+              echo '   reported version (blank = binary not found):'; \
+              $PHP_BIN -v 2>/dev/null | head -1 || true; \
+              echo ' Laravel 13 requires >= 8.3. On Hostinger/CloudLinux the default'; \
+              echo ' php is 8.2 - set the PHP_BIN repo secret to the full 8.3 path,'; \
+              echo ' e.g. /opt/alt/php83/usr/bin/php'; \
+              echo '=============================================================='; \
+              exit 1; }; \
             rm -f bootstrap/cache/config.php bootstrap/cache/routes-v7.php bootstrap/cache/events.php; \
             [ -f .env ] || cp .env.example .env; \
             if [ -n '$ENV_ENCRYPTION_KEY' ]; then \
